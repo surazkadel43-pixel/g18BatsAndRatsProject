@@ -60,26 +60,22 @@ def getConfidenceLevel(df:pd.DataFrame, firstData: int, secondData: int, conf_lv
 
 
 
-#plot risk and reward
-# risk = 0
-# reward = 0
-# risk_reward_counts = get24HourTimeLineWithRiskAndReward(BatDf, risk, reward, month=5)
-# print(risk_reward_counts, risk_reward_counts.sum()) 
-# risk_reward_counts.plot(kind='bar', figsize=(10,5))
-# plt.xlabel("Hour of Day")
-# plt.ylabel("Count")
-# plt.title(f"Bat Activity with Risk {risk} and Reward {reward} in 24-Hour Timeline Total Count: {risk_reward_counts.sum()}")
-# plt.show()
+# plot risk and reward
+risk = 0
+reward = 1
+risk_reward_counts = get24HourTimeLineWithRiskAndReward(BatDf, risk, reward, month=4)
+print(risk_reward_counts, risk_reward_counts.sum()) 
+risk_reward_counts.plot(kind='bar', figsize=(10,5))
+plt.xlabel("Hour of Day")
+plt.ylabel("Count")
+plt.title(f"Bat Activity with Risk {risk} and Reward {reward} in 24-Hour Timeline Total Count: {risk_reward_counts.sum()}")
+plt.show()
 
 
 # get confidence level 
 filteredonth = BatDf[BatDf['month'] == 4]
 filterdData = filteredonth[filteredonth['month'] == 4][~ ((filteredonth['risk'] == 0) & (filteredonth['reward'] == 0))]
-
-
-
 hardway = filterdData.query("risk == 1 and reward == 1")
-
 easyway = filterdData.query("~(risk == 1 and reward == 1)")
 
 print("easyway", easyway.shape[0])
