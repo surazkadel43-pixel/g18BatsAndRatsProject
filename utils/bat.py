@@ -5,6 +5,8 @@ import pandas as pd
 from utils.rat import RatData
 import statsmodels.stats.proportion as stm 
 from utils.barchart import BarChart as BarChart
+import scipy.stats as st 
+import numpy as np
 
 class BatData:
     bat_data: pd.DataFrame
@@ -110,4 +112,43 @@ class BatData:
         BarChart.plot_risk_reward_chart(results)
         return results
         
-
+    def analyze_risk_vs_landing(self):
+        """
+        Process the data and perform hypothesis testing:
+        Compare early vs late bat landings in terms of risk-taking.
+        
+        Returns a dictionary with:
+        - median cutoff
+        - early mean risk-taking
+        - late mean risk-taking
+        - t-statistic
+        - p-value
+        """
+        df = self.bat_data.copy()
+        
+        # Median cutoff
+        median_cutoff = df["seconds_after_rat_arrival"].median()
+        
+        # Define early vs late based on median
+        df["timing"] = np.where(df["seconds_after_rat_arrival"] <= median_cutoff, "early", "late")
+        
+        # Split the risk data
+        early_risk = df[df["timing"] == "early"]["risk"]
+        late_risk = df[df["timing"] == "late"]["risk"]
+        
+        # Descriptive stats
+        early_mean_risk = early_risk.mean()
+        late_mean_risk = late_risk.mean()
+        
+        # One-sided t-test (early < late)
+        t_stat, p_val = st.ttest_ind(early_risk, late_risk, alternative="less")
+        
+        BarChart.plot_early_late_risk(self.bat_data)
+        BarChart.plot_seconds_after_rat(self.bat_data)
+        return {
+            "median_cutoff": median_cutoff,
+            "early_mean_risk": early_mean_risk,
+            "late_mean_risk": late_mean_risk,
+            "t_stat": t_stat,
+            "p_val": p_val
+        }

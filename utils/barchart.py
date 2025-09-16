@@ -165,7 +165,7 @@ class BarChart:
         plt.figure(figsize=(7,5))
         sns.scatterplot(x='rat_arrival_number', y='bat_landing_number', data=df, s=50, color='skyblue')
         plt.xlabel("Rat Arrivals")
-        plt.ylabel("Bat Landings Number ")
+        plt.ylabel("Bat Landings Number (number) ")
         plt.title("Bat Landings vs Rat Arrivals")
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.show()
@@ -174,8 +174,8 @@ class BarChart:
         plt.figure(figsize=(7,5))
         sns.scatterplot(x='rat_arrival_number', y='seconds_after_rat_arrival', data=df, s=50, color='salmon')
         plt.xlabel("Rat Arrivals")
-        plt.ylabel("Seconds After Rat Arrival")
-        plt.title("Bat Landing Timing vs Rat Arrivals")
+        plt.ylabel("Seconds After Rat Arrival (seconds)")
+        plt.title("Bat Landing Timing (seconds) vs Rat Arrivals")
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.show()
         
@@ -183,8 +183,8 @@ class BarChart:
         plt.figure(figsize=(7,5))
         sns.scatterplot(x='rat_arrival_number', y='bat_landing_to_food', data=df, s=50, color='salmon')
         plt.xlabel("Rat Arrivals")
-        plt.ylabel("Bat Landing to Food")
-        plt.title("Bat Landing to Food vs Rat Arrivals")
+        plt.ylabel("Bat Landing to Food (seconds)")
+        plt.title("Bat Landing to Food (seconds) vs Rat Arrivals")
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.show()
 
@@ -195,4 +195,34 @@ class BarChart:
         plt.ylabel("Food Availability")
         plt.title("Food Availability vs Rat Arrivals")
         plt.grid(True, linestyle='--', alpha=0.5)
+        plt.show()
+    @staticmethod
+    def plot_seconds_after_rat(bat_data):
+        """
+        Plot histogram of seconds_after_rat_arrival for self.bat_data.
+        """
+        plt.figure(figsize=(7,5))
+        plt.hist(bat_data["seconds_after_rat_arrival"], bins=20, color="skyblue", edgecolor="black")
+        plt.xlabel("Seconds after rat arrival")
+        plt.ylabel("Number of landings")
+        plt.title("Distribution of seconds_after_rat_arrival")
+        plt.grid(axis="y", linestyle="--", alpha=0.5)
+        plt.show()
+        
+    @staticmethod
+    def plot_early_late_risk(bat_data):
+        """
+        Bar chart comparing mean risk-taking for early vs late bat landings.
+        """
+        df = bat_data.copy()
+        cutoff = df["seconds_after_rat_arrival"].median()
+        df["timing"] = np.where(df["seconds_after_rat_arrival"] <= cutoff, "early", "late")
+        
+        means = df.groupby("timing")["risk"].mean()
+        
+        plt.figure(figsize=(6,5))
+        plt.bar(means.index, means.values, color=["skyblue", "salmon"], edgecolor="black")
+        plt.ylabel("Mean Risk-taking")
+        plt.title("Early vs Late Bat Landings: Risk-taking")
+        plt.ylim(0, 1)
         plt.show()

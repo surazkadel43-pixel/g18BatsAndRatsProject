@@ -13,7 +13,7 @@ bat_df = BatData()
 rat_df = RatData() 
 
 bat_df.risk_reward_distribution()
-
+bat_df.analyze_risk_vs_landing()
 
 
 print(bat_df.risk_reward_confidence_interval())
@@ -39,7 +39,5 @@ print(rat_df.summarize_bat_food_by_rat_presence())
 
 
 
-# BarChart.plotBarChart(rat_df.rat_data, 'hour', 'avg_food_availability_hourly', 'Food Availability by Hour', 'Hour', 'Food Availability', "green")
-# BarChart.plotBarChart(rat_df.rat_data, 'hour', 'avg_rat_arrivals_hourly', 'Rat Arrivals by Hour', 'Hour', 'Rat Arrivals', "red")
 
 
