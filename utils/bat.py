@@ -1,9 +1,10 @@
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import pandas as pd
-
 from utils.rat import RatData
-
 import statsmodels.stats.proportion as stm 
-
+from utils.barchart import BarChart as BarChart
 
 class BatData:
     bat_data: pd.DataFrame
@@ -49,6 +50,8 @@ class BatData:
         # Create separate columns for rat info
         self.bat_data[['rat_arrival_number', 'rat_minutes', 'bat_landing_number', 'time', 'food_availability']] = \
             self.bat_data.apply(lambda row: rat_data.get_data_by_time(row['rat_period_start']).iloc[0], axis=1)
+        
+        BarChart.plot_rat_bat_interactions(self.bat_data)
             
       
     
@@ -76,7 +79,7 @@ class BatData:
         print(counts)
         return counts
 
-    def risk_reward_confidence_interval(self, confidence=0.95):
+    def risk_reward_confidence_interval(self):
         """Calculate z-based CI for easy vs hard way (risk–reward)."""
         
         # counts
@@ -104,6 +107,7 @@ class BatData:
                 "confidence_interval": (round(ci_low, 3), round(ci_upp, 3))
             }
 
+        BarChart.plot_risk_reward_chart(results)
         return results
         
 

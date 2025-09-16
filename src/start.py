@@ -31,6 +31,12 @@ grouped_stats = bat_df.bat_data.groupby('rat_arrival_number').agg({
 print(grouped_stats)
 rat_df.count_food_availability_per_hour()
 rat_df.count_rat_arrivals_per_hour()
+rat_df.correlation_rat_food()
+rat_df.correlation_rat_bats()
+print(rat_df.regression_food_on_rats())
+print(rat_df.regression_bat_on_rats_food())
+print(rat_df.summarize_bat_food_by_rat_presence())
+
 
 
 # BarChart.plotBarChart(rat_df.rat_data, 'hour', 'avg_food_availability_hourly', 'Food Availability by Hour', 'Hour', 'Food Availability', "green")

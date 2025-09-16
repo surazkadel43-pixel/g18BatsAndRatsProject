@@ -1,8 +1,11 @@
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import pandas as pd
 import numpy as np
 from scipy import stats
 
 import statsmodels.api as sm
+from utils.barchart import BarChart as BarChart
 
 class RatData:
     rat_data: pd.DataFrame
@@ -99,10 +102,56 @@ class RatData:
         
         
     def correlation_rat_food(self):
-     """Correlation between rat activity and food availability."""
-     corr = self.rat_data[['rat_minutes', 'food_availability']].corr()
-     return corr.applymap(float).round(3)  # clean + rounded
+        """Step-by-step correlation between rat activity and food availability,
+        handles zero-inflated data."""
+        
+        df = self.rat_data[['rat_arrival_number', 'food_availability']].copy()
+        
+        
+        # Step 0: create presence/absence column
+        df['rat_present'] = (df['rat_arrival_number'] > 0).astype(int)
+        
+        # Step 1: Means for each group
+        means = df.groupby('rat_present')['food_availability'].mean()
+        print("--- Step 1: Mean Food Availability by Presence ---")
+        print(means)
+        
+        # Step 2: Visualize using boxplot via BarChart static method
+        BarChart.plotPresenceBoxplot(df, zero_inflated_col='rat_arrival_number', numeric_col='food_availability')
+        
+        return means
 
+    def correlation_rat_bats(self):
+        """Step-by-step correlation between rat activity and bat landings,
+        handles zero-inflated data."""
+
+        df = self.rat_data[['rat_arrival_number', 'bat_landing_number']].copy()
+
+        # Step 0: create presence/absence column
+        df['rat_present'] = (df['rat_arrival_number'] > 0).astype(int)
+
+        # Step 1: Means for each group
+        means = df.groupby('rat_present')['bat_landing_number'].mean()
+        print("--- Step 1: Mean Bat Landings by Presence ---")
+        print(means)
+
+        # Step 2: Visualize using boxplot via BarChart static method
+        BarChart.plotPresenceBoxplot(df, zero_inflated_col='rat_arrival_number', numeric_col='bat_landing_number')
+
+        return means
+
+        # Step 0: create presence/absence column
+        df['rat_present'] = (df['rat_minutes'] > 0).astype(int)
+        
+        # Step 1: Means for each group
+        means = df.groupby('rat_present')['food_availability'].mean()
+        print("--- Step 1: Mean Food Availability by Presence ---")
+        print(means)
+        
+        # Step 2: Visualize using boxplot via BarChart static method
+        BarChart.plotPresenceBoxplot(df, zero_inflated_col='rat_minutes', numeric_col='food_availability')
+        
+        return means
     def regression_food_on_rats(self):
      """Regression: predict food availability from rat arrivals."""
      X = self.rat_data[['rat_arrival_number']]
@@ -111,16 +160,45 @@ class RatData:
     
      model = sm.OLS(y, X).fit()
     
-     return {
+     regression_result =  {
         "intercept": float(model.params['const']),
         "slope_rat_arrival": float(model.params['rat_arrival_number']),
         "r_squared": float(model.rsquared),
         "p_value": float(model.pvalues['rat_arrival_number']),
         "f_statistic": float(model.fvalue),
         "n_observations": int(model.nobs)
-    }
+     }
+     BarChart.plot_regression(self.rat_data, 'rat_arrival_number', 'food_availability', regression_result)
+     return regression_result
      
-    
+    def regression_bat_on_rats_food(self):
+        """
+        Multiple regression:
+        Predict bat landing number from rat arrivals and food availability.
+        Model: bat_landing_number ~ rat_arrival_number + food_availability
+        """
+        # Define X (predictors) and y (outcome)
+        X = self.rat_data[['rat_arrival_number', 'food_availability']]
+        y = self.rat_data['bat_landing_number']
+
+        # Add constant for intercept
+        X = sm.add_constant(X)
+
+        # Fit OLS model
+        model = sm.OLS(y, X).fit()
+
+        # Return clean results
+        return {
+            "intercept": float(model.params['const']),
+            "slope_rat_arrival": float(model.params['rat_arrival_number']),
+            "slope_food_availability": float(model.params['food_availability']),
+            "r_squared": float(model.rsquared),
+            "adj_r_squared": float(model.rsquared_adj),
+            "p_values": {k: float(v) for k, v in model.pvalues.items()},
+            "f_statistic": float(model.fvalue),
+            "n_observations": int(model.nobs)
+        }
+
     def get_data_by_time(self, timestamp: pd.Timestamp):
         """
         Returns rat and bat data for the 30-min interval containing the given timestamp.
@@ -142,3 +220,25 @@ class RatData:
 
         # Return only the desired columns
         return row[['rat_arrival_number', 'rat_minutes', 'bat_landing_number', 'time', 'food_availability']]
+
+
+    def summarize_bat_food_by_rat_presence(self):
+        """
+        Summarize bat landing number and food availability 
+        by rat presence (rat_arrival_number > 0 vs = 0).
+        """
+        # Create rat presence column
+        self.rat_data['rat_present'] = (self.rat_data['rat_arrival_number'] > 0).astype(int)
+        
+        # Define aggregation functions
+        agg_dict = {
+            'bat_landing_number': ['mean', 'median', lambda x: x.quantile(0.75) - x.quantile(0.25)],  # IQR
+            'food_availability': 'mean'
+        }
+        
+        summary = self.rat_data.groupby('rat_present').agg(agg_dict)
+        
+        # Rename the IQR column
+        summary.columns = ['bat_mean', 'bat_median', 'bat_IQR', 'food_mean']
+        
+        return summary
