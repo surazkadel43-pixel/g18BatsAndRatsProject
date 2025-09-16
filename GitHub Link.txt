@@ -1,0 +1,13 @@
+GitHub link for Accesing Project Folder
+
+https://github.com/surazkadel43-pixel/g18BatsAndRatsProject.git 
+
+Steps:
+
+1: Clone this link from the Vs Code and change the branch to "practice"
+
+2: Install all the Packages From the environment.yml ( using this command) 
+
+ (conda env create -f "environment.yml path location from your computer" -n "YOUR ENVironment name" )
+
+3: And Run the code using the Pyhton Intrepretator in which all the packages were Installed.
