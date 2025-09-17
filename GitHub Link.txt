@@ -10,4 +10,32 @@ Steps:
 
  (conda env create -f "environment.yml path location from your computer" -n "YOUR ENVironment name" )
 
-3: And Run the code using the Pyhton Intrepretator in which all the packages were Installed.
+
+3. The main file for running code is "src/start.py", and
+ also you can run John Kelly work by runnnning "john_Kelly_work.py" from the "src" folder
+
+4. The main relevant folder are "Data", "src", and "utils"
+you can also go through other folder but for running the project those files are not that relevant ( but you are incouraged to visit)
+
+5. At first running the code might show some error thisht might be because of wrong environment.
+So, run the code  using the Pyhton Intrepretator in which all the packages were Installed.
+
+
+
+
+
+######################################################################################
+Our group presentation Video link
+This is a link from the microsoft teams In order to watch this you have to
+ have Microsoft Desktop apps or MobileApps or you can watch it on website
+
+ 
+https://teams.microsoft.com/l/meetingrecap?driveId=b%21is8Fq8uVx0CXMI12A5tWz72FMhCK8jxBtBE00pHqG6Pgk
+_LCBTnwR5Z_tDVdDORT&driveItemId=0142DHH5DXBAZSRC5KKVFLA7PGDB466WGL&sitePath=https%3A%2F%2Fcharlesdarwinuni
+-my.sharepoint.com%2F%3Av%3A%2Fg%2Fpersonal%2Fs328963_students_cdu_edu_au%2FEXcIMyiLqlVKsH3mGHnvWMsBvKUvXxL
+EA98UGJBWi1zkdw&fileUrl=https%3A%2F%2Fcharlesdarwinuni-my.sharepoint.com%2F%3Av%3A%2Fg%2Fpersonal%2Fs328963_students
+_cdu_edu_au%2FEXcIMyiLqlVKsH3mGHnvWMsBvKUvXxLEA98UGJBWi1zkdw&iCalUid
+=040000008200E00074C5B7101A82E00800000000A5AB60ADFF26DC0100000000000000001000000065108D3A86B19640BD69DA61811AF413&threadId=
+19%3Ameeting_NzU2YzFjZTYtYThiMC00ZjVhLWI0MzUtNGRkZTViN2Y0YWU3%40thread.v2&organizerId=a69ffd3f-f223-4bc8-9fca-
+fccbba8e28d9&tenantId=9f248767-8e1a-42f3-836f-c092ab95ff70&callId=5402c24e-b409-41ee-9f3c-c6847d830236&threadType
+=Meeting&meetingType=Scheduled&subType=RecapSharingLink_RecapChiclet 
