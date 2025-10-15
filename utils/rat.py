@@ -1,12 +1,18 @@
 import sys, os
+
+from sklearn.discriminant_analysis import StandardScaler
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 from scipy import stats
-
+from math import ceil
 import statsmodels.api as sm
 from utils.barchart import BarChart as BarChart
-
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn import metrics
+from typing import List, Optional, Tuple
 class RatData:
     rat_data: pd.DataFrame
     num_of_month: int
@@ -24,6 +30,21 @@ class RatData:
                 )
         self.rat_data['hour'] = self.rat_data['timeFormat'].dt.hour
         self.num_of_month = self.rat_data['month'].nunique()
+        #if  month is less than 3  add season column and make it 0 and if month is greater and equal to 3 make it 1
+    
+        self.rat_data['season'] = np.where(self.rat_data['month'] < 3, 0, 1)
+        
+        # Compute average rat minutes safely (avoid division by zero)
+        self.rat_data['rat_avg_minutes'] = np.where(
+            self.rat_data['rat_arrival_number'] > 0,
+            self.rat_data['rat_minutes'] / self.rat_data['rat_arrival_number'],
+            0
+        )
+        
+        #rat presence column if rat is greater than 0 then 1 else 0
+        self.rat_data['rat_present'] = (self.rat_data['rat_arrival_number'] > 0).astype(int)
+        
+       
 
 
     def describeSelf(self):
@@ -242,3 +263,227 @@ class RatData:
         summary.columns = ['bat_mean', 'bat_median', 'bat_IQR', 'food_mean']
         
         return summary
+    
+    def multipleRegressionModel(self, 
+                             rat_presence=2, 
+                             season=2, 
+                             dataframe: pd.DataFrame=None, 
+                             y_col='bat_landing_number', 
+                             x_col=[  'hours_after_sunset','rat_minutes', 'season', 'food_availability']):
+        """
+        Builds a Multiple Linear Regression model to predict a target variable (y_col)
+        based on selected explanatory variables (x_col), with optional filtering 
+        by rat presence and season.
+
+        Parameters:
+            rat_presence (int): 0 = no rats, 1 = rats present, 2 = all data
+            season (int): 0 = winter, 1 = spring, 2 = all seasons
+            dataframe (pd.DataFrame): dataset to use (default = self.rat_data)
+            y_col (str): dependent variable (target)
+            x_col (list): explanatory variables
+
+        Returns:
+            model.summary(): statsmodels regression summary
+        """
+
+        # Step 1: Choose dataframe
+        df = dataframe if dataframe is not None else self.rat_data.copy()
+
+        # Step 2: Apply filters
+        if season != 2:
+            df = df[df['season'] == season]
+        if rat_presence != 2:
+            df = df[df['rat_present'] == rat_presence]
+
+        # Step 3: Prepare X and y
+        X = df[x_col].copy()
+        y = df[y_col].copy()
+        
+        # Step 4: Remove missing values
+        df_clean = pd.concat([X, y], axis=1).dropna()
+        X = df_clean[x_col]
+        y = df_clean[y_col]
+
+        # Step 5: Add constant and fit model
+        X = sm.add_constant(X)
+        print(X.info())  # optional debugging info
+        model = sm.OLS(y, X).fit()
+
+        return model.summary()
+    
+    def multiple_linear_regression_with_interaction(self, rat_presence=2, season=2):
+        """
+        Model: food_availability ~ hours_after_sunset + season + (hours_after_sunset * season)
+        """
+        df = self.rat_data.copy()
+
+        # Optional filtering
+        if season != 2:
+            df = df[df["season"] == season]
+        if rat_presence != 2:
+            df = df[df["rat_present"] == rat_presence]
+
+        # Define variables
+        df["interaction"] = df["hours_after_sunset"] * df["rat_minutes"]
+
+        X = df[["hours_after_sunset", "season", "rat_minutes", "food_availability", "interaction"]]
+        #X = df[["rat_minutes",'bat_landing_number']]
+        # y = df["food_availability"]
+        y = df["bat_landing_number"]
+        # Build regression
+        X = sm.add_constant(X)
+        model = sm.OLS(y, X).fit()
+
+        print(model.summary())
+        return model
+    
+    def multiple_linear_regression_bat_landing(self, rat_presence = 2, season = 2):
+        df = self.rat_data.copy()
+        if season != 2:
+            df = df[df['season'] == season]
+        if rat_presence != 2:
+            df = df[df['rat_present'] == rat_presence]
+
+
+        X = df[['rat_minutes','hours_after_sunset', 'season', 'food_availability']]
+        y = df['bat_landing_number']
+        print(X.info())
+        X = sm.add_constant(X)  # add intercept
+        model = sm.OLS(y, X).fit()
+        return model.summary()
+    
+    #multiple linear regression modal reponse variable ( food_availability ) and 
+    # explanatory variables (   hours_after_sunset, rat_avg_minutes, month, season) using LinearRegression from sklearn and also show graph of the regression
+    def multiple_linear_regression_sklearn(self, rat_presence = 2, season = 2):
+        df = self.rat_data.copy()
+        if season != 2:
+            df = df[df['season'] == season]
+        
+        if rat_presence != 2:
+            df = df[df['rat_present'] == rat_presence]
+        
+        X = df[['rat_minutes','hours_after_sunset', 'season', 'food_availability']]
+        y = df['bat_landing_number']
+        #split the data into training and testing data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.35, random_state=0)
+        print("dataframe shape:", df.shape)
+        print("X_train size:", X_train.shape)
+        print("X_test size:", X_test.shape)
+        model = LinearRegression()
+        model.fit(X_train, y_train)
+        # Print the intercept and coefficient learned by the linear regression model
+        print("Intercept:", model.intercept_)
+        print("Coefficients:", model.coef_)
+        # Predict on the test data
+        y_pred = model.predict(X_test)
+        # Print evaluation metrics
+        print("Mean Absolute Error:", metrics.mean_absolute_error(y_test, y_pred))
+        print("Mean Squared Error:", metrics.mean_squared_error(y_test, y_pred))
+        print("Root Mean Squared Error:", np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+        #r-squared also called coefficient of determination
+        print("R^2:", metrics.r2_score(y_test, y_pred))
+        # Plotting actual vs predicted values
+        plt.figure(figsize=(10, 6))
+        plt.scatter(y_test, y_pred, color='blue')
+        plt.plot([y.min(), y.max()], [y.min(), y.max()], 'k--', lw=2)
+        plt.xlabel('Actual')
+        plt.ylabel('Predicted')
+        plt.title('Actual vs Predicted Food Availability')
+        plt.show()
+        
+        return model
+
+    def showScatterPlot(self, rat_presence = 2, season = 2,dataframe: pd.DataFrame = None, y_col = 'bat_landing_number', x_col = [ 'food_availability', 'rat_minutes', 'season', 'hours_after_sunset']):
+        if dataframe is None:
+            df = self.rat_data.copy()
+        else:
+            df = dataframe.copy()
+
+        if season != 2:
+            df = df[df['season'] == season]
+        if rat_presence != 2:
+            df = df[df['rat_present'] == rat_presence]
+        
+        fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
+        fig1.tight_layout()
+        #add label season at the top inside graph
+        fig1.suptitle(f'Scatter Plots for  Season={season}')
+        """ FIGURE 1 """
+        ax1.scatter(x = df[x_col[0]], y = df[y_col])
+        ax1.set_xlabel(x_col[0])
+        ax1.set_ylabel(y_col)
+
+        ax2.scatter(x = df[x_col[1]], y = df[y_col])
+        ax2.set_xlabel(x_col[1])
+        ax2.set_ylabel(y_col)
+
+        ax3.scatter(x = df[x_col[2]], y = df[y_col])
+        ax3.set_xlabel(x_col[2])
+        ax3.set_ylabel(y_col)
+
+        ax4.scatter(x = df[x_col[3]], y = df[y_col])
+        ax4.set_xlabel(x_col[3])
+        ax4.set_ylabel(y_col)
+
+        plt.show()
+    #linear regression modal between food avaibility and bat landing number
+    
+    #Generalization function for Applying Z- scale Standardization
+    def build_and_evaluate_regression_using_z_stand_rescale(self, rat_presence = 2, season = 2, dataframe = None, y_col = 'bat_landing_number', x_col = [ 'food_availability', 'rat_minutes', 'season', 'hours_after_sunset']):
+        """
+        Build and evaluate a linear regression model using Statsmodels.
+        Applies z-score standardisation and compares results before and after standardisation.
+
+
+        Returns
+        -------
+        dict
+            Dictionary containing model summaries before and after standardisation.
+        """
+
+        
+        
+        # Step 2: Separate explanatory (X) and response (y) variables
+        if dataframe is None:
+            df = self.rat_data.copy()
+        else:
+            df = dataframe.copy()
+
+        if season != 2:
+            df = df[df['season'] == season]
+        if rat_presence != 2:
+            df = df[df['rat_present'] == rat_presence]
+            # X, y
+        X = df[x_col]  # 2-D DataFrame
+        y = df[y_col]           # 1-D Series
+        
+        # Step 3: Build and evaluate the original linear regression model
+        X_const = sm.add_constant(X)
+        model_original = sm.OLS(y, X_const).fit()
+        print("\n--- Original Regression Model Summary ---")
+        print(model_original.summary())
+
+        self.showScatterPlot(rat_presence=rat_presence, season=season,  y_col=y_col, x_col=x_col)
+
+        # Step 4: Apply Z-score standardisation
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+        X_scaled_df = pd.DataFrame(X_scaled, index=X.index, columns=X.columns)
+        
+        # Step 5: Rebuild and evaluate regression with standardised variables
+        X_scaled_const = sm.add_constant(X_scaled_df)
+        model_standardised = sm.OLS(y, X_scaled_const).fit()
+        print("\n--- Standardised Regression Model Summary ---")
+        print(model_standardised.summary())
+        
+        df[x_col[0]] = X_scaled_df[x_col[0]]
+        df[x_col[1]] = X_scaled_df[x_col[1]]
+        df[x_col[2]] = X_scaled_df[x_col[2]]
+        df[x_col[3]] = X_scaled_df[x_col[3]]
+        
+        self.showScatterPlot(rat_presence=rat_presence, season=season, dataframe=df, y_col=y_col, x_col=x_col)
+        
+    
+    
+
+    
