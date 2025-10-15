@@ -404,10 +404,13 @@ class RatData:
         if rat_presence != 2:
             df = df[df['rat_present'] == rat_presence]
         
+       
         fig1, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
         fig1.tight_layout()
         #add label season at the top inside graph
         fig1.suptitle(f'Scatter Plots for  Season={season}')
+        
+        
         """ FIGURE 1 """
         ax1.scatter(x = df[x_col[0]], y = df[y_col])
         ax1.set_xlabel(x_col[0])
@@ -420,10 +423,11 @@ class RatData:
         ax3.scatter(x = df[x_col[2]], y = df[y_col])
         ax3.set_xlabel(x_col[2])
         ax3.set_ylabel(y_col)
-
-        ax4.scatter(x = df[x_col[3]], y = df[y_col])
-        ax4.set_xlabel(x_col[3])
-        ax4.set_ylabel(y_col)
+        
+        if len(x_col) > 3:
+            ax4.scatter(x = df[x_col[3]], y = df[y_col])
+            ax4.set_xlabel(x_col[3])
+            ax4.set_ylabel(y_col)
 
         plt.show()
     #linear regression modal between food avaibility and bat landing number
@@ -465,23 +469,7 @@ class RatData:
 
         self.showScatterPlot(rat_presence=rat_presence, season=season,  y_col=y_col, x_col=x_col)
 
-        # Step 4: Apply Z-score standardisation
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        X_scaled_df = pd.DataFrame(X_scaled, index=X.index, columns=X.columns)
         
-        # Step 5: Rebuild and evaluate regression with standardised variables
-        X_scaled_const = sm.add_constant(X_scaled_df)
-        model_standardised = sm.OLS(y, X_scaled_const).fit()
-        print("\n--- Standardised Regression Model Summary ---")
-        print(model_standardised.summary())
-        
-        df[x_col[0]] = X_scaled_df[x_col[0]]
-        df[x_col[1]] = X_scaled_df[x_col[1]]
-        df[x_col[2]] = X_scaled_df[x_col[2]]
-        df[x_col[3]] = X_scaled_df[x_col[3]]
-        
-        self.showScatterPlot(rat_presence=rat_presence, season=season, dataframe=df, y_col=y_col, x_col=x_col)
         
     
     

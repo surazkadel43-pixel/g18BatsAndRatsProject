@@ -4,7 +4,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # Load your data
-df = pd.read_csv('data/dataset1.csv')
+df = pd.read_csv('dataset1.csv')
 
 # Feature engineering example
 df['season'] = df['season'].astype(int)  # ensure numeric
